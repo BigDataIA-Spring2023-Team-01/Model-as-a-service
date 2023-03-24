@@ -9,33 +9,49 @@ from diagrams.onprem.workflow import Airflow
 from diagrams.custom import Custom
 from diagrams.onprem.workflow import Airflow
 
-with Diagram("Whisper and Chat API Architecture", show=False, direction = "LR"):
+# Creating the cloud cluster 
+with Diagram("Workflow", show=False, direction = "LR"):
     with Cluster("Cloud"):
+
+        # Airflow Process 
         with Cluster("Airflow"):
-               dag_adhoc = Airflow("Adhoc Process")
-               dag_batch = Airflow("Batch Process")
+               adhoc_dag = Airflow("Adhoc Dag Process")
+               batch_dag = Airflow("Batch Dag Process")
 
-               with Cluster("Docker"):
-                airflow_docker = Docker("Airflow")
-
+            #    with Cluster("Docker"):
+            #     airflow_docker = Docker("Airflow")
+        # Streamlit Appliation 
         with Cluster("Streamlit"):
-            with Cluster("Docker"):
-                streamlit_docker = Docker("Streamlit")
-            streamlit_app = Custom("Streamlit", "./streamlit-icon.png")
+            # with Cluster("Docker"):
+                # streamlit_docker = Docker("Streamlit")
+         streamlit_app = Custom("Streamlit", "./data/streamlit-logo.png")
 
         with Cluster("API"):
-            whisper_api = Custom("Whisper API", "./whisper-icon.png")
-            chat_api = Custom("Chat API", "./chatgpt-icon.png")
-
+            whisper_api = Custom("Whisper API", r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\data\Rev-AudioTipsandTechniques-1.png")
+            chat_api = Custom("Chat API",r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\data\download.png")
+        
+        # AWS s3 storages
         with Cluster("Storage"):
-            s3 = S3("Audio Files")
-
+            s3_CGR = S3("ChatGPT Results")
+            s3_PT = S3("Processed transcript")
+            s3_BAF = S3("Batch Audio Files")
+            s3_AF = S3("Raw Audio Files")
+            
+            
     with Cluster("User"):
         user = User("User")
+    # Flow 1 : User uploads file >> triggering adhoc dag
+    user >> Edge(label="Uploads File") >> streamlit_app
+    streamlit_app >> Edge(label = "Triggers Adhoc Process") >> adhoc_dag
+    adhoc_dag >> Edge(label="Stores file in rawmp3 bucket") >> s3_AF
+    s3_AF >> Edge(label=" Calls Whisper API to generate transcript") >> whisper_api
+    whisper_api >> Edge(label="Storing processed transcript in s3 bucket") >> s3_PT
+  
+    # Flow 2 : User asks question 
+    user >> Edge(label="Asks question after selecting file") >> streamlit_app
+    streamlit_app >> chat_api
 
-    user >> Edge(label = "Access Echonotes application") >> streamlit_app
-    user  >> chat_api 
-    s3 >> Edge(label = "Fetches general questionnaire file from S3") >> chat_api
-    streamlit_app >> Edge(label = "Triggers Adhoc Process and Uploads audio file") >> dag_adhoc
-    dag_adhoc >> Edge(label = "Calls Whisper API to generate transcript") >> whisper_api
-    dag_batch >> Edge(label = "Runs every midnight and Stores files in S3") >> s3
+    # Flow 3 : Batch Dag
+    batch_dag >> Edge(label="Runs every day and stores file in batchmp3 bucket") >> s3_BAF
+    s3_BAF >> Edge(label="Asks Generic questions to Chat API") >> chat_api
+    chat_api >> Edge (label="Stores the chat result in chatgpt_results bucket") >> s3_CGR
