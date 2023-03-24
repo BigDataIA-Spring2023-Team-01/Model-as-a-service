@@ -3,7 +3,7 @@
 from cProfile import label
 from diagrams import Diagram, Cluster, Edge
 from diagrams.aws.storage import S3
-from diagrams.onprem.client import User
+from diagrams.azure.identity import Users
 from diagrams.onprem.container import Docker
 from diagrams.onprem.workflow import Airflow
 from diagrams.custom import Custom
@@ -31,7 +31,7 @@ with Diagram("Workflow", show=False, direction = "LR"):
             chat_api = Custom("Chat API",r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\data\download.png")
         
         # AWS s3 storages
-        with Cluster("Storage"):
+        with Cluster("S3 storages"):
             s3_CGR = S3("ChatGPT Results")
             s3_PT = S3("Processed transcript")
             s3_BAF = S3("Batch Audio Files")
@@ -39,19 +39,19 @@ with Diagram("Workflow", show=False, direction = "LR"):
             
             
     with Cluster("User"):
-        user = User("User")
+        user = Users("User")
     # Flow 1 : User uploads file >> triggering adhoc dag
-    user >> Edge(label="Uploads File") >> streamlit_app
-    streamlit_app >> Edge(label = "Triggers Adhoc Process") >> adhoc_dag
-    adhoc_dag >> Edge(label="Stores file in rawmp3 bucket") >> s3_AF
-    s3_AF >> Edge(label=" Calls Whisper API to generate transcript") >> whisper_api
-    whisper_api >> Edge(label="Storing processed transcript in s3 bucket") >> s3_PT
+    user >> Edge(label="Asks question after selecting file",color="blue") >> streamlit_app
+    streamlit_app >> Edge(label = "Triggers Adhoc Process",color="blue") >> adhoc_dag
+    adhoc_dag >> Edge(label="Stores file in rawmp3 bucket",color="blue") >> s3_AF
+    s3_AF >> Edge(label=" Calls Whisper API to generate transcript",color="blue") >> whisper_api
+    whisper_api >> Edge(label="Storing processed transcript in s3 bucket",color="blue") >> s3_PT
   
     # Flow 2 : User asks question 
-    user >> Edge(label="Asks question after selecting file") >> streamlit_app
-    streamlit_app >> chat_api
+    user >> Edge(label="Uploads File",color="black") >> streamlit_app
+    streamlit_app >> Edge(color="black") >> chat_api
 
     # Flow 3 : Batch Dag
-    batch_dag >> Edge(label="Runs every day and stores file in batchmp3 bucket") >> s3_BAF
-    s3_BAF >> Edge(label="Asks Generic questions to Chat API") >> chat_api
-    chat_api >> Edge (label="Stores the chat result in chatgpt_results bucket") >> s3_CGR
+    batch_dag >> Edge(label="Runs every day and stores file in batchmp3 bucket",color="red") >> s3_BAF
+    s3_BAF >> Edge(label="Asks Generic questions to Chat API",color="red") >> chat_api
+    chat_api >> Edge (label="Stores the chat result in chatgpt_results bucket",color="red") >> s3_CGR
