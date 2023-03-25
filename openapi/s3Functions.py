@@ -1,7 +1,8 @@
-import requests
+import sys
 import os
-from dotenv import load_dotenv
 import boto3
+import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 #---------------------------------------------------------------------------------------------------------------
@@ -27,7 +28,9 @@ files={
 #
 
 def uploadTos3(filepath,bucket,key):
-    s3.upload_file(filepath, bucket,key)
+    # s3.upload_file(filepath, bucket,key)
+    audio_file_key = 'test'
+    s3.download_file(raws3Bucket,audio_file_key,'testinggggggggggg')
 
 uploadTos3(filepath,raws3Bucket,'samplemp3')
 

@@ -1,7 +1,10 @@
+import sys
 import requests
 import os
 from dotenv import load_dotenv
 import boto3
+import io
+
 
 load_dotenv()
 #---------------------------------------------------------------------------------------------------------------
@@ -19,6 +22,8 @@ raws3Bucket = os.environ.get('raws3Bucket')
 #---------------------------------------------------------------------------------------------------------------
 #
 filepath = 'data/Missed class summaryt.mp3'
+s3_object = s3.get_object(Bucket=raws3Bucket, Key='Missed class summaryt.mp3')
+result = s3_object['Body'].read()
 
 #---------------------------------------------------------------------------------------------------------------
 #                            Calling API
@@ -30,12 +35,14 @@ def whisper(filepath):
     url = "https://api.openai.com/v1/audio/transcriptions"
 
     payload={'model': 'whisper-1'}
-    files={
-      ('file',('Missed class summaryt.mp3',open(filepath,'rb')))
-      # 'file': open('data/Recording.mp3','rb'),
-      # 'file1': open('data/Missed class summaryt.mp3','rb')
+    # files={
+    #   ('file',(io.BytesIO(result),'audio/mpeg'))
+    #   # 'file': open('data/Recording.mp3','rb'),
+    #   # 'file1': open('data/Missed class summaryt.mp3','rb')
 
-    }
+    # }
+    files = {'file': ('file.mp3', io.BytesIO(result), 'audio/mpeg')}
+
     headers = {
       'Authorization': 'Bearer ' + token
     }
