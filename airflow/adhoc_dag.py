@@ -6,6 +6,8 @@ from airflow.models import Variable
 from datetime import datetime
 import requests
 import io
+from io import BytesIO
+
 import json
 # Set up AWS credentials
 aws_access_key_id = Variable.get('AWS_ACCESS_KEY')
@@ -15,7 +17,8 @@ RAW_MP3_BUCKET = Variable.get('raws3Bucket')
 PROCESSED_TRANSCRIPT_BUCKET = Variable.get('processedTranscriptBucket')
 CHAT_GPT_RESULTS = 'chatgptresults'
 user_input = {
-        "filename": "Recording.mp3"
+        "filename": "Recording",
+        "filetype":"mp3"
         }
 
 prompts = [
@@ -53,18 +56,16 @@ def ask_question(question, context):
 
 # Define function for Task 1
 def read_from_s3(**kwargs):
-
-    s3_object = s3_client.get_object(Bucket=RAW_MP3_BUCKET, Key=kwargs['dag_run'].conf['filename'])
+    filename = kwargs['dag_run'].conf['filename']+"."+kwargs['dag_run'].conf['filetype']
+    s3_object = s3_client.get_object(Bucket=RAW_MP3_BUCKET, Key=filename)
     audio_data = s3_object['Body'].read()
     result = io.BytesIO(audio_data)
-    return result
 
-# Define function for Task 2
-def whisper(audio_data):
+
     url = "https://api.openai.com/v1/audio/transcriptions"
 
     payload={'model': 'whisper-1'}
-    files = {'file': ('file.mp3', audio_data, 'audio/mpeg')}
+    files = {'file': ('file.mp3', result, 'audio/mpeg')}
 
     headers = {
       'Authorization': 'Bearer ' + token
@@ -72,16 +73,16 @@ def whisper(audio_data):
 
 
     response = requests.request("POST", url, headers=headers, data=payload, files=files)
-    transcript = response['Body'].read().decode()
+    transcript = response.text
 
     return transcript
 
 
-# Define function for Task 3
-def write_to_s3(transcript):
-    s3_client.put_object(Body=transcript.encode(), Bucket=PROCESSED_TRANSCRIPT_BUCKET, Key='transcript.txt')
+# Define function for Task 2
+def write_to_s3(transcript,**kwargs):
+    s3_client.put_object(Body=transcript.encode(), Bucket=PROCESSED_TRANSCRIPT_BUCKET, Key=kwargs['dag_run'].conf['filename'])
 
-# Define function for Task 4
+# Define function for Task 3
 def call_chatgpt(transcript,**kwargs):
     
 
@@ -97,25 +98,29 @@ def call_chatgpt(transcript,**kwargs):
 
     return results
 
+# Define function for Task 4
 
 def clean_ups3(**kwargs):
-    obj = s3_client.Object(RAW_MP3_BUCKET, kwargs['dag_run'].conf['filename'])
-    obj.delete()
-
+    
+    response = s3_client.delete_object(Bucket=RAW_MP3_BUCKET, Key=kwargs['dag_run'].conf['filename']+"."+kwargs['dag_run'].conf['filetype'])
+    if response['ResponseMetadata']['HTTPStatusCode'] == 204:
+        print(f'The object with key  was deleted from bucket "{RAW_MP3_BUCKET}"')
+    else:
+        print(f'There was an error deleting the object with key  from bucket "{RAW_MP3_BUCKET}"')
     return "Deleted file from rawmp3 bucket after it was processed"
 
 
 
 # Define the DAG
-dag = DAG('my_dag', description='Example DAG for processing audio file with Whisper.ai and ChatGPT',
+dag = DAG('adhoc_dag', description='Example DAG for processing audio file with Whisper.ai and ChatGPT',
           schedule_interval=None, start_date=datetime(2023, 3, 24),params = user_input)
 
 # Define the tasks
 task1 = PythonOperator(task_id='read_from_s3', python_callable=read_from_s3, dag=dag)
-task2 = PythonOperator(task_id='send_to_whisper', python_callable=whisper, dag=dag, op_kwargs={'audio_data': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
-task3 = PythonOperator(task_id='write_to_s3', python_callable=write_to_s3, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='send_to_whisper') }}"})
-task4 = PythonOperator(task_id='call_chatgpt', python_callable=call_chatgpt, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='send_to_whisper') }}"})
-task5 = PythonOperator(task_id='clean_ups3', python_callable=clean_ups3, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='send_to_whisper') }}"})
+# task2 = PythonOperator(task_id='send_to_whisper', python_callable=whisper, dag=dag, op_kwargs={'audio_data': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
+task2 = PythonOperator(task_id='write_to_s3', python_callable=write_to_s3, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
+task3 = PythonOperator(task_id='call_chatgpt', python_callable=call_chatgpt, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
+task4 = PythonOperator(task_id='clean_ups3', python_callable=clean_ups3, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
 
 # Define the task dependencies
-task1 >> task2 >> task3 >> task4 >> task5
+task1 >> task2 >> task3 >> task4
