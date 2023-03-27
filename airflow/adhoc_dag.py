@@ -17,8 +17,7 @@ RAW_MP3_BUCKET = Variable.get('raws3Bucket')
 PROCESSED_TRANSCRIPT_BUCKET = Variable.get('processedTranscriptBucket')
 CHAT_GPT_RESULTS = 'chatgptresults'
 user_input = {
-        "filename": "Recording",
-        "filetype":"mp3"
+        "filename": "Recording.mp3"
         }
 
 prompts = [
@@ -56,16 +55,15 @@ def ask_question(question, context):
 
 # Define function for Task 1
 def read_from_s3(**kwargs):
-    filename = kwargs['dag_run'].conf['filename']+"."+kwargs['dag_run'].conf['filetype']
+    filename = kwargs['dag_run'].conf['filename']
     s3_object = s3_client.get_object(Bucket=RAW_MP3_BUCKET, Key=filename)
-    audio_data = s3_object['Body'].read()
-    result = io.BytesIO(audio_data)
+    audio_data = s3_object['Body']
 
 
     url = "https://api.openai.com/v1/audio/transcriptions"
 
     payload={'model': 'whisper-1'}
-    files = {'file': ('file.mp3', result, 'audio/mpeg')}
+    files = {'file': (filename, audio_data)}
 
     headers = {
       'Authorization': 'Bearer ' + token
@@ -80,11 +78,14 @@ def read_from_s3(**kwargs):
 
 # Define function for Task 2
 def write_to_s3(transcript,**kwargs):
-    s3_client.put_object(Body=transcript.encode(), Bucket=PROCESSED_TRANSCRIPT_BUCKET, Key=kwargs['dag_run'].conf['filename'])
+    fileToWrite = kwargs['dag_run'].conf['filename']
+    result = fileToWrite.split('.')[0]
+    s3_client.put_object(Body=transcript.encode(), Bucket=PROCESSED_TRANSCRIPT_BUCKET, Key=result)
 
 # Define function for Task 3
 def call_chatgpt(transcript,**kwargs):
-    
+    fileToWrite = kwargs['dag_run'].conf['filename']
+    result = fileToWrite.split('.')[0]
 
     results = {}
     for question in prompts:
@@ -92,22 +93,21 @@ def call_chatgpt(transcript,**kwargs):
         results[question] = answer
 
     # Store the results in JSON format in S3 bucket
-    key = kwargs['dag_run'].conf['filename']
     data = json.dumps(results)
-    s3_client.put_object(Key=key, Body=data,Bucket=CHAT_GPT_RESULTS)
+    s3_client.put_object(Key=result, Body=data,Bucket=CHAT_GPT_RESULTS)
 
     return results
 
 # Define function for Task 4
 
 def clean_ups3(**kwargs):
-    
-    response = s3_client.delete_object(Bucket=RAW_MP3_BUCKET, Key=kwargs['dag_run'].conf['filename']+"."+kwargs['dag_run'].conf['filetype'])
+    filename = kwargs['dag_run'].conf['filename']
+    response = s3_client.delete_object(Bucket=RAW_MP3_BUCKET, Key=filename)
     if response['ResponseMetadata']['HTTPStatusCode'] == 204:
-        print(f'The object with key  was deleted from bucket "{RAW_MP3_BUCKET}"')
+        print(f'The object with key {filename}  was deleted from bucket "{RAW_MP3_BUCKET}"')
     else:
-        print(f'There was an error deleting the object with key  from bucket "{RAW_MP3_BUCKET}"')
-    return "Deleted file from rawmp3 bucket after it was processed"
+        print(f'There was an error deleting the object with key {filename}  from bucket "{RAW_MP3_BUCKET}"')
+    return "Completed cleanup"
 
 
 

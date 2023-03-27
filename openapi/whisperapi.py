@@ -22,9 +22,9 @@ raws3Bucket = os.environ.get('raws3Bucket')
 #---------------------------------------------------------------------------------------------------------------
 #
 filepath = 'data/Missed class summaryt.mp3'
-s3_object = s3.get_object(Bucket=raws3Bucket, Key='Missed class summaryt.mp3')
-result = s3_object['Body'].read()
-
+s3_object = s3.get_object(Bucket=raws3Bucket, Key='Recording.mp3')
+audio_data = s3_object['Body']
+file_key = 'Recording.mp3'
 #---------------------------------------------------------------------------------------------------------------
 #                            Calling API
 #---------------------------------------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ def whisper(filepath):
     #   # 'file1': open('data/Missed class summaryt.mp3','rb')
 
     # }
-    files = {'file': ('file.mp3', io.BytesIO(result), 'audio/mpeg')}
+    files = {'file': (file_key, audio_data)}
 
     headers = {
       'Authorization': 'Bearer ' + token
