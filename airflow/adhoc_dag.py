@@ -38,18 +38,30 @@ def ask_question(question, context):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
-    openai_api_endpoint = "https://api.openai.com/v1/engines/davinci/completions"
+    openai_api_endpoint = "https://api.openai.com/v1/chat/completions"
 
-    data = {
-        "prompt": f"{context}\nQuestion: {question}\nAnswer:",
-        "max_tokens": 1024,
-        "n": 1,
-        "stop": None
+    payload = json.dumps({
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {
+      "role": "system",
+      "content": context
+    },
+    {
+      "role": "user",
+      "content": f"Question:{question}"
+    },
+    {
+      "role": "user",
+      "content": "Answer?"
     }
-
-    response = requests.post(openai_api_endpoint, headers=headers, data=json.dumps(data))
-
-    answer = response.json()["choices"][0]["text"].strip()
+  ],
+  "max_tokens": 700,
+  "n": 1
+})
+    response = requests.post(openai_api_endpoint, headers=headers, data=payload)
+    print(response.text)
+    answer = response.json()["choices"][0]["message"]["content"].strip()
 
     return answer
 
@@ -113,7 +125,7 @@ def clean_ups3(**kwargs):
 
 # Define the DAG
 dag = DAG('adhoc_dag', description='Example DAG for processing audio file with Whisper.ai and ChatGPT',
-          schedule_interval=None, start_date=datetime(2023, 3, 24),params = user_input)
+          schedule_interval=None, start_date=datetime(2023, 3, 24),params = user_input,catchup=False)
 
 # Define the tasks
 task1 = PythonOperator(task_id='read_from_s3', python_callable=read_from_s3, dag=dag)

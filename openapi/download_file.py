@@ -1,11 +1,9 @@
 import sys
-import requests
 import os
-from dotenv import load_dotenv
 import boto3
-import io
-
-
+import requests
+from dotenv import load_dotenv
+import json
 load_dotenv()
 #---------------------------------------------------------------------------------------------------------------
 #                            Connection Declarations
@@ -16,33 +14,23 @@ s3 = boto3.client('s3',region_name='us-east-1',
                             aws_secret_access_key = os.environ.get('AWS_SECRET_KEY'))
 
 raws3Bucket = os.environ.get('raws3Bucket')
-
-#---------------------------------------------------------------------------------------------------------------
-#                            Variable Declarations
-#---------------------------------------------------------------------------------------------------------------
-#
-# filepath = 'data/Missed class summaryt.mp3'
-file_key = 'Recording.mp3'
-s3_object = s3.get_object(Bucket=raws3Bucket, Key=file_key)
-audio_data = s3_object['Body']
-
-#---------------------------------------------------------------------------------------------------------------
-#                            Calling API
-#---------------------------------------------------------------------------------------------------------------
-#
+processedTranscriptBucket = os.environ.get('processedTranscriptBucket')
+filepath = r'data/Missed class summaryt.mp3'    
+KEY = 'Recording.mp3'
 
 def whisper():
     token = os.environ.get('OPENAI_SECRET_KEY')
     url = "https://api.openai.com/v1/audio/transcriptions"
 
-    payload={'model': 'whisper-1','response_format':'text'}
+    payload={'model': 'whisper-1'}
     # files={
     #   ('file',(io.BytesIO(result),'audio/mpeg'))
     #   # 'file': open('data/Recording.mp3','rb'),
     #   # 'file1': open('data/Missed class summaryt.mp3','rb')
 
     # }
-    files = {'file': (file_key, audio_data)}
+    filepath = f'data/sound_recordings/{KEY}'
+    files = {'file': r'filepath'}
 
     headers = {
       'Authorization': 'Bearer ' + token
@@ -52,6 +40,11 @@ def whisper():
     response = requests.request("POST", url, headers=headers, data=payload, files=files)
     print(response.text)
 
+# s3.download_file(
+#     Bucket=raws3Bucket,
+#     Key=KEY,
+#     Filename=f'data/sound_recordings/{KEY}'
+# )
 
-whisper()
-# s3.upload_file(r'data/Missed class summaryt.mp3', raws3Bucket,'rawfile')
+response = s3.list_objects_v2(Bucket=raws3Bucket)
+print(response['Contents'])
