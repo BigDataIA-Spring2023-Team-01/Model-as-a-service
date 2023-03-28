@@ -6,13 +6,15 @@ import boto3
 import sys
 import io
 import requests
-
+import json
+from dotenv import load_dotenv
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+load_dotenv()
+USER_BUCKET_NAME = os.environ.get("raws3Bucket")
 
 s3client = boto3.client('s3',region_name='us-east-1',
-                        aws_access_key_id = AWS_ACCESS_KEY_ID,
-                        aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+                        aws_access_key_id = os.environ.get('AWS_ACCESS_KEY'),
+                        aws_secret_access_key = os.environ.get('AWS_SECRET_KEY'))
 
 st.header("Model As A Service")
 
@@ -64,28 +66,44 @@ def main():
         st.write(f"Response: {response}")
 
 
-if __name__ == "__main__":
-    main()
-
-
-
-
 
 
 st.markdown("-------")
 
+s3 = boto3.resource('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY'), aws_secret_access_key=os.environ.get('AWS_SECRET_KEY'))
+buckets3 = s3.Bucket('processedtranscript')
+file_names = [obj.key for obj in buckets3.objects.all()]
+selected_file = st.selectbox('Select a file', file_names)
 
-options = ['Processed Audio List', 'Recording_2', 'Recording_3']
-selected_option = st.selectbox("Select Processed Audio from the list", options)
 
-if options:
+if selected_file:
+    s3 = boto3.resource('s3',aws_access_key_id=os.environ.get('AWS_ACCESS_KEY'), aws_secret_access_key=os.environ.get('AWS_SECRET_KEY'))
+    bucket_name_ = 'chatgptresults'
+    bucket = s3.Bucket(bucket_name_)
+
+    # Select JSON file to read
+    file_name = selected_file
+    
+    # Read JSON file from S3
+    try:
+        obj = s3.Object(bucket_name_, file_name)
+        contents = obj.get()['Body'].read().decode('utf-8')
+        data = json.loads(contents)
+        for key, value in data.items():
+            st.markdown(f"<p style='font-weight: bold;'>{key}: </p><p>{value}</p>", unsafe_allow_html=True)
+        #st.write(data)
+    except:
+        st.error("Failed to read file from S3 bucket.")
     st.text_area('Generic Transcript Questionnaire',
                  '''
-        1. What was the meeting about? 
-        2. How many people participated?
-        3. What was the conclusion of the discussion''', on_change = None)
+    1. What was the meeting about? 
+    2. How many people participated?
+    3. What was the conclusion of the discussion''', on_change = None)
     
 
     st.text_input('Enter a question to answer related to the meeting', on_change = None)
 
     st.button("Ask Button")
+
+if __name__ == "__main__":
+    main()
