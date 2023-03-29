@@ -13,18 +13,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 USER_BUCKET_NAME = os.environ.get("raws3Bucket")
-# Set AWS credentials
+
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-# USER_BUCKET_NAME_MP3 = 'rawmp3'
-token = os.environ.get("token")
+
+token = os.environ.get("OPENAI_SECRET_KEY")
 
 
 s3client = boto3.client('s3',region_name='us-east-1',
                         aws_access_key_id = AWS_ACCESS_KEY_ID,
                         aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 
-st.header("Model As A Service")
+st.header("Recording Summariser 🔊📝")
 
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
@@ -71,7 +71,7 @@ if selected_file:
     
 
 
-    # st.button("Ask Button")
+    
 
 
 def ask_question(question, context):
@@ -113,7 +113,7 @@ file_url = 'https://s3.console.aws.amazon.com/s3/object/{}?region=us-east-1&pref
 s3_object = s3client.get_object(Bucket=bucket_name, Key=file_name)
 file_content = s3_object['Body'].read().decode('utf-8')
 
-# print(file_content)
+
 
 question = st.text_input("Ask a question")
 if st.button("Ask Button"):
