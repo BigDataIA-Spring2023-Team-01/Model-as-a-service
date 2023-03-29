@@ -7,14 +7,18 @@ import sys
 import io
 import requests
 import json
-from dotenv import load_dotenv
+# from airflow import batch_dag
+# from dotenv import load_dotenv
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load_dotenv()
+
+# load_dotenv()
 USER_BUCKET_NAME = os.environ.get("raws3Bucket")
 
+
+
 s3client = boto3.client('s3',region_name='us-east-1',
-                        aws_access_key_id = os.environ.get('AWS_ACCESS_KEY'),
-                        aws_secret_access_key = os.environ.get('AWS_SECRET_KEY'))
+                        aws_access_key_id = AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 
 st.header("Model As A Service")
 
@@ -30,44 +34,48 @@ if audio_file is not None:
     else:
         st.write("Please upload an MP3 file.")
 
-def whisper_api(question, transcript_url):
-    # Define the API endpoint and headers
-    endpoint = "https://api.whisper.ai/v1/ask"
-    headers = {"Authorization": "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"}
-
-    # Define the request payload
-    data = {
-        "question": question,
-        "audio_url": transcript_url
+def ask_question(question, context):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
     }
+    openai_api_endpoint = "https://api.openai.com/v1/chat/completions"
 
-    # Call the API
-    response = requests.post(endpoint, headers=headers, json=data)
+    payload = json.dumps({
+"model": "gpt-3.5-turbo",
+"messages": [
+    {
+    "role": "system",
+    "content": context
+    },
+    {
+    "role": "user",
+    "content": f"Question:{question}"
+    },
+    {
+    "role": "user",
+    "content": "Answer?"
+    }
+],
+"max_tokens": 700,
+"n": 1
+})
+    
+    response = requests.post(openai_api_endpoint, headers=headers, data=payload)
+    print("here")
+    print(response.text)
+    answer = response.json()["choices"][0]["message"]["content"].strip()
+    return answer
 
-    # Return the response
-    return response.json()["answer"]
+transcript_url = f"https://processedtranscript.s3.amazonaws.com/Promotion+Conversation"
+question = st.text_input("Ask a question")
+if st.button("Ask Button"):
+    answer = ask_question(transcript_url, question)
+    st.text_area('Answer to question asked:', value = answer)
+    # st.write(answer)   
 
-def main():
-    # Create a file uploader in Streamlit
-    # uploaded_file = st.file_uploader("Upload an audio file", type=["mp3", "wav"])
-    question = st.text_input("Ask a question")
-
-    # If a file is uploaded by the user and a question is entered
-    if audio_file is not None and question != "":
-
-        # Get the URL of the uploaded file
-        transcript_url = f"https://s3.amazonaws.com/processedtranscript/{audio_file.name}"
-
-        # Call the Whisper API to generate a response to the question
-        response = whisper_api(question, transcript_url)
-
-        # Display the response to the user
-        st.write(f"Question: {question}")
-        st.write(f"Response: {response}")
-
-
-
-
+ 
+    
 st.markdown("-------")
 
 s3 = boto3.resource('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY'), aws_secret_access_key=os.environ.get('AWS_SECRET_KEY'))
@@ -101,9 +109,10 @@ if selected_file:
     3. What was the conclusion of the discussion''', on_change = None)
     
 
-    st.text_input('Enter a question to answer related to the meeting', on_change = None)
+    # st.text_input('Enter a question to answer related to the meeting', on_change = None)
 
-    st.button("Ask Button")
 
-if __name__ == "__main__":
-    main()
+    # st.button("Ask Button")
+
+
+
