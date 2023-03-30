@@ -21,7 +21,6 @@ raws3Bucket = os.environ.get('raws3Bucket')
 #                            Variable Declarations
 #---------------------------------------------------------------------------------------------------------------
 #
-# filepath = 'data/Missed class summaryt.mp3'
 file_key = 'Recording.mp3'
 s3_object = s3.get_object(Bucket=raws3Bucket, Key=file_key)
 audio_data = s3_object['Body']
@@ -29,29 +28,24 @@ audio_data = s3_object['Body']
 #---------------------------------------------------------------------------------------------------------------
 #                            Calling API
 #---------------------------------------------------------------------------------------------------------------
-#
+
 
 def whisper():
     token = os.environ.get('OPENAI_SECRET_KEY')
     url = "https://api.openai.com/v1/audio/transcriptions"
 
-    payload={'model': 'whisper-1','response_format':'text'}
-    # files={
-    #   ('file',(io.BytesIO(result),'audio/mpeg'))
-    #   # 'file': open('data/Recording.mp3','rb'),
-    #   # 'file1': open('data/Missed class summaryt.mp3','rb')
+    payload={'model': 'whisper-1','response_format':'json'}
 
-    # }
     files = {'file': (file_key, audio_data)}
-
     headers = {
       'Authorization': 'Bearer ' + token
     }
 
 
     response = requests.request("POST", url, headers=headers, data=payload, files=files)
-    print(response.text)
+
+    response_json = response.json()
+    print(response_json)
 
 
 whisper()
-# s3.upload_file(r'data/Missed class summaryt.mp3', raws3Bucket,'rawfile')

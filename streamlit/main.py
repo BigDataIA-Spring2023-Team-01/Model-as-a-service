@@ -15,7 +15,7 @@ load_dotenv()
 USER_BUCKET_NAME = os.environ.get("raws3Bucket")
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_KEY')
 
 token = os.environ.get("OPENAI_SECRET_KEY")
 
@@ -28,6 +28,15 @@ st.header("Recording Summariser 🔊📝")
 
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
+def triggerDAG(filename:str):
+    url = os.environ.get("AIRFLOW_URL")
+    auth = ("team01", "team01af")
+    headers = {"Content-Type": "application/json"}
+    data = {"conf": {"filename": filename}}
+
+    response = requests.post(url, headers=headers, json=data, auth=auth)
+
+    return response.status_code
 
 # Check if a file was uploaded
 if audio_file is not None:
@@ -35,6 +44,10 @@ if audio_file is not None:
     if st.button("Upload Button"):
         s3client.upload_fileobj(audio_file, USER_BUCKET_NAME, audio_file.name)
         st.success("File uploaded successfully!", icon="✅")
+        status = triggerDAG(audio_file.name)
+        if status == 200:
+            st.write("AdHoc DAG Triggered")
+
     else:
         st.write("Please upload an MP3 file.")
  
@@ -63,11 +76,7 @@ if selected_file:
         #st.write(data)
     except:
         st.error("Failed to read file from S3 bucket.")
-    st.text_area('Generic Transcript Questionnaire',
-                 '''
-    1. What was the meeting about? 
-    2. How many people participated?
-    3. What was the conclusion of the discussion''', on_change = None)
+   
     
 
 
