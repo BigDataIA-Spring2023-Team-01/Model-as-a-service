@@ -3,7 +3,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import json
-token = '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'
+token = os.environ.get("OPENAI_SECRET_KEY") # whisper api key
 
 def test_api():
     
