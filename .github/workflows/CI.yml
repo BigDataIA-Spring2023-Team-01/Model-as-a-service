@@ -110,10 +110,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Run tests
-      working-directory: ./
+      working-directory: ./pytest
       run: |
         pip install pytest
-        python -m pytest pytest/testing.py      
+        python -m pytest testing.py      
   whisper:
     runs-on: ubuntu-latest
     steps:
