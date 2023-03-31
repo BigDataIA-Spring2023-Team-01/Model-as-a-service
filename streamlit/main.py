@@ -36,27 +36,26 @@ GPTRESULTS_BUCKET = 'chatgptresults' # bucket with generic question in it
 # streamlit page 
 #Title
 st.header("Recording Summariser 🔊📝")
-@st.cache_data()
-def get_base64_of_bin_file(bin_file):
+
+# setting up the background image 
+def get_base64(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
     return base64.b64encode(data).decode()
 
-def set_png_as_page_bg(png_file):
-    bin_str = get_base64_of_bin_file(png_file)
+def set_background(png_file):
+    bin_str = get_base64(png_file)
     page_bg_img = '''
     <style>
-    body {
+    .stApp {
     background-image: url("data:image/png;base64,%s");
     background-size: cover;
     }
     </style>
     ''' % bin_str
-    
     st.markdown(page_bg_img, unsafe_allow_html=True)
-    return
 
-set_png_as_page_bg(r"C:\Users\user\OneDrive\Desktop\61f58226ce7af518c8d5a553_Remote-Work-Header-rev-A (1).png")
+set_background(r"C:\Users\user\OneDrive\Desktop\61f58226ce7af518c8d5a553_Remote-Work-Header-rev-A (1).png")
 #File Uploader
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
