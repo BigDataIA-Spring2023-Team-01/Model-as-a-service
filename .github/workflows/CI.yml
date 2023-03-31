@@ -107,6 +107,7 @@ env:
 
 jobs:
   pytest:
+    runs-on: ubuntu-latest
     steps:
     - name: Run tests
       working-directory: ./
