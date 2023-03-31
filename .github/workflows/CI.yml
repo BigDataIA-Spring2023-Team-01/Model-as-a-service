@@ -81,9 +81,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # - name: Install dependencies
-    #   run: |
-    #       pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+          pip install -r requirements.txt
     pytest:
       steps:
         name: Run tests
@@ -96,9 +96,9 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
-        # - name: Install dependencies
-        #   run: |
-        #     pip install -r requirements.txt
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
         - name: Run Whisper API
           run: python whisper_api.py
     chat:
@@ -106,9 +106,9 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
-        # - name: Install dependencies
-        #   run: |
-        #     pip install -r requirements.txt
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
         - name: Run Chat API
           run: python chat_api.py
         
@@ -117,9 +117,9 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
-        # - name: Install dependencies
-        #   run: |
-        #     pip install -r requirements.txt
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
         - name: Trigger Airflow DAG
           run: |
             curl -X POST \
@@ -133,9 +133,9 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
-        # - name: Install dependencies
-        #   run: |
-        #     pip install -r requirements.txt
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
         - name: Trigger batch process using cron
           run: python airflow_trigger.py --dag batch_process --schedule "@daily"
   # streamlit:
