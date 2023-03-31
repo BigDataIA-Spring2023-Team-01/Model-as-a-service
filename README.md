@@ -18,7 +18,7 @@ Overall, this Streamlit application will offer a unique and efficient platform f
 2. Browse the location where you want to clone the repository
 3. Write the following command and press enter 
 ````
-  git clone https://github.com/BigDataIA-Spring2023-Team-01/Assignment-2.git
+  git clone https://github.com/BigDataIA-Spring2023-Team-01/Model-as-a-service.git
  ````
  4. Create a virtual environment using the following command
  ````
