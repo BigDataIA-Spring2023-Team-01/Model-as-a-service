@@ -56,8 +56,11 @@ def background(png_file):
     st.markdown(page_bg_img, unsafe_allow_html=True)
 
 background(r"./data/download.jpeg")
+
 #File Uploader
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
+st.audio(audio_file)
+
 
 # Triggering the adhoc dag
 def triggerDAG(filename:str):
