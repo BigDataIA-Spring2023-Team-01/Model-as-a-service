@@ -9,6 +9,7 @@ import io
 import requests
 import json
 from dotenv import load_dotenv
+import base64
 
 #------------------------------------------------------------------------------------------------------------------------------------
 # loading environment variables 
