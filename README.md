@@ -28,6 +28,10 @@ Overall, this Streamlit application will offer a unique and efficient platform f
  ````
   pip install -r /path/to/requirements.txt
  ````
+ 6. Run the Streamlit application.(cd to the root of the project /Model-as-a-service)
+ ````
+  streamlit run streamlit/main.py
+ ````
 # Reference 
 ./airflow
 
