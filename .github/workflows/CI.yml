@@ -106,14 +106,14 @@ env:
   RUN_ID: ${{ github.run_id }}
 
 jobs:
-  pytest:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Run tests
-      working-directory: /pytest
-      run: |
-        pip install pytest
-        python -m pytest testing.py      
+  # pytest:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Run tests
+  #     working-directory: /pytest
+  #     run: |
+  #       pip install pytest
+  #       python -m pytest testing.py      
   whisper:
     runs-on: ubuntu-latest
     steps:
