@@ -9,6 +9,7 @@ import io
 import requests
 import json
 from dotenv import load_dotenv
+import base64
 
 #------------------------------------------------------------------------------------------------------------------------------------
 # loading environment variables 
@@ -36,6 +37,25 @@ GPTRESULTS_BUCKET = 'chatgptresults' # bucket with generic question in it
 #Title
 st.header("Recording Summariser 🔊📝")
 
+# setting up the background image 
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def background(png_file):
+    bin_str = get_base64(png_file)
+    page_bg_img = '''
+    <style>
+    .stApp {
+    background-image: url("data:image/png;base64,%s");
+    background-size: cover;
+    }
+    </style>
+    ''' % bin_str
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+background(r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\streamlit\download.jpeg")
 #File Uploader
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
