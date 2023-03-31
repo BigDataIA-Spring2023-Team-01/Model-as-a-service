@@ -55,7 +55,7 @@ def set_background(png_file):
     ''' % bin_str
     st.markdown(page_bg_img, unsafe_allow_html=True)
 
-set_background(r"C:\Users\user\OneDrive\Desktop\61f58226ce7af518c8d5a553_Remote-Work-Header-rev-A (1).png")
+set_background(r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\streamlit\download.jpeg")
 #File Uploader
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
