@@ -52,7 +52,7 @@ jobs:
 
 
       - name: Configure gcloud
-        uses: google-github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           service_account_key: ${{ env.GCP_SERVICE_ACCOUNT_KEY }}
