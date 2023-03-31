@@ -123,7 +123,7 @@ jobs:
         run: |
           pip install -r requirements.txt
       - name: Run Whisper API
-        run: python whisper_api.py
+        run: python healthcheck.py
   chat:
     runs-on: ubuntu-latest
     steps:
@@ -133,7 +133,7 @@ jobs:
         run: |
           pip install -r requirements.txt
       - name: Run Chat API
-        run: python chat_api.py
+        run: python whisperapi.py
       
   airflow-adhoc:
     runs-on: ubuntu-latest
@@ -160,7 +160,7 @@ jobs:
         run: |
           pip install -r requirements.txt
       - name: Trigger batch process using cron
-        run: python airflow_trigger.py --dag batch_process --schedule "@daily"
+        run: python batch_dag.py --dag batch_process --schedule "@daily"
   # streamlit:
   #   runs-on: ubuntu-latest
   #   steps:
