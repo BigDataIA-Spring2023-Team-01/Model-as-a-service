@@ -8,6 +8,8 @@ from diagrams.onprem.container import Docker
 from diagrams.onprem.workflow import Airflow
 from diagrams.custom import Custom
 from diagrams.onprem.workflow import Airflow
+from diagrams.gcp.compute import Functions as GCF
+from diagrams.gcp.devtools import SDK
 
 # Creating the cloud cluster 
 with Diagram("Workflow", show=False, direction = "LR"):
@@ -18,13 +20,13 @@ with Diagram("Workflow", show=False, direction = "LR"):
                adhoc_dag = Airflow("Adhoc Dag Process")
                batch_dag = Airflow("Batch Dag Process")
 
-            #    with Cluster("Docker"):
-            #     airflow_docker = Docker("Airflow")
+               with Cluster("Google CLoud Platform"):
+                airflow_gcp = GCF("Airflow")
         # Streamlit Appliation 
         with Cluster("Streamlit"):
-            # with Cluster("Docker"):
-                # streamlit_docker = Docker("Streamlit")
-         streamlit_app = Custom("Streamlit", "./data/streamlit-logo.png")
+            with Cluster("Streamlit CLoud"):
+                 streamlit_cloud = SDK("Streamlit Cloud")
+            streamlit_app = Custom("Streamlit", "./data/streamlit-logo.png")
 
         with Cluster("API"):
             whisper_api = Custom("Whisper API", r"./data/Rev-AudioTipsandTechniques-1.png")
