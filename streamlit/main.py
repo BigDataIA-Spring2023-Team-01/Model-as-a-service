@@ -31,7 +31,8 @@ s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access
 USER_BUCKET_NAME = os.environ.get("raws3Bucket") # bucket in which audio files goes
 PROCESSED_BUCKET = s3.Bucket('processedtranscript') # bucket with the audio transcript in it 
 GPTRESULTS_BUCKET = 'chatgptresults' # bucket with generic question in it
-
+AIRFLOW_USERNAME = os.environ.get("AIRFLOW_USERNAME")
+AIRFLOW_PASSWORD = os.environ.get("AIRFLOW_PASSWORD")
 #------------------------------------------------------------------------------------------------------------------------------------
 # streamlit page 
 #Title
@@ -65,7 +66,7 @@ st.audio(audio_file)
 # Triggering the adhoc dag
 def triggerDAG(filename:str):
     url = os.environ.get("AIRFLOW_URL")
-    auth = ("team01", "team01af")
+    auth = (AIRFLOW_USERNAME, AIRFLOW_PASSWORD)
     headers = {"Content-Type": "application/json"}
     data = {"conf": {"filename": filename}}
 
