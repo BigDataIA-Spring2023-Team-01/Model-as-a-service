@@ -1,0 +1,153 @@
+
+
+# on:  
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - 
+#         name: Checkout
+#         uses: actions/checkout@v3
+#       - 
+#         id: commit
+#         uses: pr-mpt/actions-commit-hash@v2
+#       - 
+#         name: Set up Python 3.10
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10.6'
+#       - 
+#         name: Install Requirements
+#         working-directory: ./pytest
+#         run: pip install -r requirements.txt
+#       - 
+#         # name: Run tests
+#         # working-directory: ./
+#         # run: |
+#         #   pip install pytest
+#         #   python -m pytest pytest/file_url_generator_test_nexrad.py                                
+#         #   python -m pytest pytest/file_url_generator_test_geos.py                                
+
+#        name: Deploy DAGs
+#       uses: kadena-io/chainweb-deployment@v1.2
+#       with:
+#         cluster: staging
+#         manifest-path: manifests/manifest.yml
+#       -
+#         name: Login to Docker Hub
+#         uses: docker/login-action@v2
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}   # fetch from dockerhub
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}      # fetch from dockerhub
+#       -
+#         name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
+#       -
+#         name: Build and push Fastapi
+#         uses: docker/build-push-action@v4
+#         with:
+#           context: ./api    # path to dockerfile
+#           # file: Dockerfile
+#           push: true
+#           tags: |
+#             ${{ secrets.DOCKERHUB_USERNAME }}/fastapi:gitaction
+#             ${{ secrets.DOCKERHUB_USERNAME }}/fastapi:${{ steps.commit.outputs.short }}
+#           # Change the container image "demo_fastapi_private"
+#       -
+#         name: Build and push Streamlit
+#         uses: docker/build-push-action@v4
+#         with:
+#           context: ./streamlit    # path to dockerfile
+#           # file: Dockerfile
+#           push: true
+#           tags: |
+#             ${{ secrets.DOCKERHUB_USERNAME }}/streamlit:gitaction
+#             ${{ secrets.DOCKERHUB_USERNAME }}/streamlit:${{ steps.commit.outputs.short }}
+#           # Change the container image "demo_fastapi_private"
+ 
+
+name: CI
+on:
+  push:
+    branches:
+      - main
+env:
+  RUN_ID: ${{ github.run_id }}
+
+jobs:
+  my-job:
+    runs-on: ubuntu-latest
+  # build:
+  #   runs-on: ubuntu-latest
+  #   - name: Install dependencies
+  #     run: |
+  #         pip install -r requirements.txt
+    pytest:
+      steps:
+        name: Run tests
+        working-directory: ./
+        run: |
+          pip install pytest
+          python -m pytest pytest/testing.py                                
+    whisper:
+      # runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
+        - name: Run Whisper API
+          run: python whisper_api.py
+    chat:
+      # runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
+        - name: Run Chat API
+          run: python chat_api.py
+        
+    airflow-adhoc:
+      # runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
+        - name: Trigger Airflow DAG
+          run: |
+            curl -X POST \
+              -H "Cache-Control: no-cache" \
+              -H "Content-Type: application/json" \
+              -u "{{ secrets.AIRFLOW_USERNAME }}:{{ secrets.AIRFLOW_PASSWORD}}" \
+              -d '{ "dag_id": "my_dag", "run_id": ${{ env.RUN_ID }} }' \
+              "http://35.237.121.118:8080/api/v1/dags/adhoc_dag/dagRuns"
+    airflow-batch:
+      # runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Install dependencies
+          run: |
+            pip install -r requirements.txt
+        - name: Trigger batch process using cron
+          run: python airflow_trigger.py --dag batch_process --schedule "@daily"
+  # streamlit:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: Install dependencies
+  #       run: |
+  #         pip install -r requirements.txt
+  #     - name: Run Streamlit app
+  #       run: streamlit run main.py --server.port $PORT --server.headless true
+
