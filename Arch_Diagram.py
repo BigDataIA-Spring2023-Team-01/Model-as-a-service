@@ -27,8 +27,8 @@ with Diagram("Workflow", show=False, direction = "LR"):
          streamlit_app = Custom("Streamlit", "./data/streamlit-logo.png")
 
         with Cluster("API"):
-            whisper_api = Custom("Whisper API", r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\data\Rev-AudioTipsandTechniques-1.png")
-            chat_api = Custom("Chat API",r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\data\download.png")
+            whisper_api = Custom("Whisper API", r"./data/Rev-AudioTipsandTechniques-1.png")
+            chat_api = Custom("Chat API",r"./data/download.png")
         
         # AWS s3 storages
         with Cluster("S3 storages"):
