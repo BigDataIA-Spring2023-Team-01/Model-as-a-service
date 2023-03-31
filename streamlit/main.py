@@ -66,7 +66,7 @@ st.audio(audio_file)
 # Triggering the adhoc dag
 def triggerDAG(filename:str):
     url = os.environ.get("AIRFLOW_URL")
-    auth = (AIRFLOW_USERNAME, AIRFLOW_PASSWORD)
+    auth = ("team01", "team01af")
     headers = {"Content-Type": "application/json"}
     data = {"conf": {"filename": filename}}
 
