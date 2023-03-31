@@ -6,7 +6,11 @@ on:
     branches:
       - main
 env:
-  RUN_ID: ${{ github.run_id }}
+    RUN_ID: ${{ github.run_id }}
+    GCP_PROJECT_ID: damg7245team01
+    GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+    GCP_COMPUTE_ZONE: us-east1-b
+    GCP_COMPUTE_INSTANCE: airflow-maas
 
 jobs:
   # pytest:
@@ -17,7 +21,7 @@ jobs:
   #     run: |
   #       pip install pytest
   #       python -m pytest testing.py      
-  whisper:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          
+
       - name: 'Create env file'
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
@@ -37,7 +41,6 @@ jobs:
       - name: Run Chat API
         run: python openapi/whisperapi.py
       
-
       - name: Trigger Airflow DAG
         run: |
           curl -X POST \
@@ -47,6 +50,30 @@ jobs:
             -d '{ "dag_id": "my_dag", "run_id": ${{ env.RUN_ID }} }' \
             "http://35.237.121.118:8080/api/v1/dags/my_dag/dagRuns"
 
-  
- 
 
+      - name: Configure gcloud
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          service_account_key: ${{ env.GCP_SERVICE_ACCOUNT_KEY }}
+          compute_zone: ${{ env.GCP_COMPUTE_ZONE }}
+          compute_instance: ${{ env.GCP_COMPUTE_INSTANCE }}
+
+
+      - name: Check for changes
+        id: git-diff
+        run: |
+          if git diff --name-only HEAD~ HEAD | grep -q airflow/dags ; then
+            echo "::set-output name=has_changes::true"
+          else
+            echo "::set-output name=has_changes::false"
+          fi
+
+
+      - name: Sync DAGs to GCP
+        if: ${{ steps.git-diff.outputs.has_changes == 'true' }}
+        run: |
+          gcloud compute scp --recurse --compress \
+            --zone ${{ env.GCP_COMPUTE_ZONE }} \
+            ./airflow/dags \
+            ${{ env.GCP_COMPUTE_INSTANCE }}:~/airflow-server/dags
