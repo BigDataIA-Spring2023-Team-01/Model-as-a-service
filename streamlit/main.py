@@ -16,7 +16,7 @@ import base64
 load_dotenv()
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_KEY')
-token = os.environ.get("OPENAI_SECRET_KEY")
+token = os.environ.get("OPENAI_SECRET_KEY") # whisper api key
 
 #------------------------------------------------------------------------------------------------------------------------------------
 # defining s3 clients 
