@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Run tests
-      working-directory: ./pytest
+      working-directory: /pytest
       run: |
         pip install pytest
         python -m pytest testing.py      
