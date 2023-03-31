@@ -1,3 +1,4 @@
+# importing libraries 
 import streamlit as st
 import pandas as pd
 from io import StringIO
@@ -7,27 +8,38 @@ import sys
 import io
 import requests
 import json
-# from airflow import batch_dag
 from dotenv import load_dotenv
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------------------------------------------------------------
+# loading environment variables 
 load_dotenv()
-USER_BUCKET_NAME = os.environ.get("raws3Bucket")
-
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_KEY')
-
 token = os.environ.get("OPENAI_SECRET_KEY")
 
-
+#------------------------------------------------------------------------------------------------------------------------------------
+# defining s3 clients 
 s3client = boto3.client('s3',region_name='us-east-1',
                         aws_access_key_id = AWS_ACCESS_KEY_ID,
                         aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 
+s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+
+#------------------------------------------------------------------------------------------------------------------------------------
+# defining various s3 buckets 
+USER_BUCKET_NAME = os.environ.get("raws3Bucket") # bucket in which audio files goes
+PROCESSED_BUCKET = s3.Bucket('processedtranscript') # bucket with the audio transcript in it 
+GPTRESULTS_BUCKET = 'chatgptresults' # bucket with generic question in it
+
+#------------------------------------------------------------------------------------------------------------------------------------
+# streamlit page 
+#Title
 st.header("Recording Summariser 🔊📝")
 
+#File Uploader
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
+# Triggering the adhoc dag
 def triggerDAG(filename:str):
     url = os.environ.get("AIRFLOW_URL")
     auth = ("team01", "team01af")
@@ -38,7 +50,7 @@ def triggerDAG(filename:str):
 
     return response.status_code
 
-# Check if a file was uploaded
+# Check if a file was uploaded or not 
 if audio_file is not None:
     
     if st.button("Upload Button"):
@@ -47,41 +59,39 @@ if audio_file is not None:
         status = triggerDAG(audio_file.name)
         if status == 200:
             st.write("AdHoc DAG Triggered")
-
     else:
         st.write("Please upload an MP3 file.")
- 
-    
+
+# Processed audio file 
 st.markdown("-------")
 
-s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-buckets3 = s3.Bucket('processedtranscript')
-file_names = [obj.key for obj in buckets3.objects.all()]
+# Selecting audio files for context
+file_names = [obj.key for obj in PROCESSED_BUCKET.objects.all()]
 selected_file = st.selectbox('Select a file', file_names)
-
+file_name = selected_file
 
 if selected_file:
-    s3 = boto3.resource('s3',aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-    bucket_name_ = 'chatgptresults'
-    bucket = s3.Bucket(bucket_name_)
-
-    file_name = selected_file
-    
-    try:
-        obj = s3.Object(bucket_name_, file_name)
+   bucket = s3.Bucket(GPTRESULTS_BUCKET)
+#    file_name = selected_file
+try:
+        obj = s3.Object(GPTRESULTS_BUCKET, file_name)
         contents = obj.get()['Body'].read().decode('utf-8')
         data = json.loads(contents)
         for key, value in data.items():
             st.markdown(f"<p style='font-weight: bold;'>{key}: </p><p>{value}</p>", unsafe_allow_html=True)
         #st.write(data)
-    except:
-        st.error("Failed to read file from S3 bucket.")
+except:
+    st.error("Failed to read file from S3 bucket.")
+    st.text_area('Generic Transcript Questionnaire',
+                 '''
+    1. What was the meeting about? 
+    2. How many people participated?
+    3. What was the conclusion of the discussion''', on_change = None)
    
-    
-
-
-    
-
+#------------------------------------------------------------------------------------------------------------------------------------
+# Defining Various Funtions 
+#------------------------------------------------------------------------------------------------------------------------------------
+# asking question using whisper api 
 
 def ask_question(question, context):
     headers = {
@@ -116,15 +126,18 @@ def ask_question(question, context):
     answer = response.json()["choices"][0]["message"]["content"].strip()
     return answer
 
+   
 bucket_name = 'processedtranscript'
 file_url = 'https://s3.console.aws.amazon.com/s3/object/{}?region=us-east-1&prefix={}'.format(bucket_name,file_name)
 
 s3_object = s3client.get_object(Bucket=bucket_name, Key=file_name)
 file_content = s3_object['Body'].read().decode('utf-8')
 
-
-
+#-----------------------------------------------------------------------------
+#Streamlit Page Continue
+# asking questions using whisper api 
 question = st.text_input("Ask a question")
 if st.button("Ask Button"):
     answer = ask_question(file_content, question)
     st.text_area('Answer to question asked:', value = answer)
+
