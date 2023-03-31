@@ -78,33 +78,51 @@ on:
 env:
   RUN_ID: ${{ github.run_id }}
 
+# jobs:
+#   my-job:
+#     runs-on: ubuntu-latest
+#   # build:
+#   #   runs-on: ubuntu-latest
+#   #   - name: Install dependencies
+#   #     run: |
+#   #         pip install -r requirements.txt
+#     pytest:
+#       steps:
+#         name: Run tests
+#         working-directory: ./
+#         run: |
+#           pip install pytest
+#           python -m pytest pytest/testing.py                                
+#     whisper:
+#       # runs-on: ubuntu-latest
+#       steps:
+#         - name: Checkout code
+#           uses: actions/checkout@v2
+#         - name: Install dependencies
+#           run: |
+#             pip install -r requirements.txt
+#         - name: Run Whisper API
+#           run: python whisper_api.py
 jobs:
-  my-job:
+  pytest:
+    steps:
+      name: Run tests
+      working-directory: ./
+      run: |
+        pip install pytest
+        python -m pytest pytest/testing.py      
+  whisper:
     runs-on: ubuntu-latest
-  # build:
-  #   runs-on: ubuntu-latest
-  #   - name: Install dependencies
-  #     run: |
-  #         pip install -r requirements.txt
-    pytest:
-      steps:
-        name: Run tests
-        working-directory: ./
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
         run: |
-          pip install pytest
-          python -m pytest pytest/testing.py                                
-    whisper:
-      # runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Install dependencies
-          run: |
-            pip install -r requirements.txt
-        - name: Run Whisper API
-          run: python whisper_api.py
+          pip install -r requirements.txt
+      - name: Run Whisper API
+        run: python whisper_api.py
     chat:
-      # runs-on: ubuntu-latest
+      runs-on: ubuntu-latest
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
@@ -115,7 +133,7 @@ jobs:
           run: python chat_api.py
         
     airflow-adhoc:
-      # runs-on: ubuntu-latest
+      runs-on: ubuntu-latest
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
