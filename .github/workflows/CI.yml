@@ -70,13 +70,7 @@
 #           # Change the container image "demo_fastapi_private"
  
 
-name: CI
-on:
-  push:
-    branches:
-      - main
-env:
-  RUN_ID: ${{ github.run_id }}
+
 
 # jobs:
 #   my-job:
@@ -103,10 +97,18 @@ env:
 #             pip install -r requirements.txt
 #         - name: Run Whisper API
 #           run: python whisper_api.py
+name: CI
+on:
+  push:
+    branches:
+      - main
+env:
+  RUN_ID: ${{ github.run_id }}
+
 jobs:
   pytest:
     steps:
-      name: Run tests
+    - name: Run tests
       working-directory: ./
       run: |
         pip install pytest
@@ -121,43 +123,43 @@ jobs:
           pip install -r requirements.txt
       - name: Run Whisper API
         run: python whisper_api.py
-    chat:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Install dependencies
-          run: |
-            pip install -r requirements.txt
-        - name: Run Chat API
-          run: python chat_api.py
-        
-    airflow-adhoc:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Install dependencies
-          run: |
-            pip install -r requirements.txt
-        - name: Trigger Airflow DAG
-          run: |
-            curl -X POST \
-              -H "Cache-Control: no-cache" \
-              -H "Content-Type: application/json" \
-              -u "{{ secrets.AIRFLOW_USERNAME }}:{{ secrets.AIRFLOW_PASSWORD}}" \
-              -d '{ "dag_id": "my_dag", "run_id": ${{ env.RUN_ID }} }' \
-              "http://35.237.121.118:8080/api/v1/dags/adhoc_dag/dagRuns"
-    airflow-batch:
-      # runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Install dependencies
-          run: |
-            pip install -r requirements.txt
-        - name: Trigger batch process using cron
-          run: python airflow_trigger.py --dag batch_process --schedule "@daily"
+  chat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Run Chat API
+        run: python chat_api.py
+      
+  airflow-adhoc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Trigger Airflow DAG
+        run: |
+          curl -X POST \
+            -H "Cache-Control: no-cache" \
+            -H "Content-Type: application/json" \
+            -u "{{ secrets.AIRFLOW_USERNAME }}:{{ secrets.AIRFLOW_PASSWORD}}" \
+            -d '{ "dag_id": "my_dag", "run_id": ${{ env.RUN_ID }} }' \
+            "http://35.237.121.118:8080/api/v1/dags/adhoc_dag/dagRuns"
+  airflow-batch:
+    # runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Trigger batch process using cron
+        run: python airflow_trigger.py --dag batch_process --schedule "@daily"
   # streamlit:
   #   runs-on: ubuntu-latest
   #   steps:
