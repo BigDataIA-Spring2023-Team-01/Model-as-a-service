@@ -129,7 +129,6 @@ dag = DAG('adhoc_dag', description='Example DAG for processing audio file with W
 
 # Define the tasks
 task1 = PythonOperator(task_id='read_from_s3', python_callable=read_from_s3, dag=dag)
-# task2 = PythonOperator(task_id='send_to_whisper', python_callable=whisper, dag=dag, op_kwargs={'audio_data': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
 task2 = PythonOperator(task_id='write_to_s3', python_callable=write_to_s3, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
 task3 = PythonOperator(task_id='call_chatgpt', python_callable=call_chatgpt, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
 task4 = PythonOperator(task_id='clean_ups3', python_callable=clean_ups3, dag=dag, op_kwargs={'transcript': "{{ ti.xcom_pull(task_ids='read_from_s3') }}"})
