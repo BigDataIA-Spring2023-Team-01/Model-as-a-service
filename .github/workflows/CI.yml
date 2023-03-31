@@ -79,11 +79,13 @@ env:
   RUN_ID: ${{ github.run_id }}
 
 jobs:
-  build:
+  my-job:
     runs-on: ubuntu-latest
-    - name: Install dependencies
-      run: |
-          pip install -r requirements.txt
+  # build:
+  #   runs-on: ubuntu-latest
+  #   - name: Install dependencies
+  #     run: |
+  #         pip install -r requirements.txt
     pytest:
       steps:
         name: Run tests
