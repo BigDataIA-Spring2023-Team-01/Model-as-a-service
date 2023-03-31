@@ -43,7 +43,7 @@ def get_base64(bin_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-def set_background(png_file):
+def background(png_file):
     bin_str = get_base64(png_file)
     page_bg_img = '''
     <style>
@@ -55,7 +55,7 @@ def set_background(png_file):
     ''' % bin_str
     st.markdown(page_bg_img, unsafe_allow_html=True)
 
-set_background(r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\streamlit\download.jpeg")
+background(r"C:\Users\user\OneDrive\Desktop\DAMG_7245\Model-as-a-service\streamlit\download.jpeg")
 #File Uploader
 audio_file = st.file_uploader("Attach an audio file", type = 'mp3')
 
